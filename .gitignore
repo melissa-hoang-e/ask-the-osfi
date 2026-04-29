@@ -1,0 +1,32 @@
+# Environment
+.env
+*.env
+.venv/
+venv/
+
+# API keys — never commit these
+secrets.py
+
+# Generated data
+data/raw_docs/
+data/embeddings.json
+data/chroma/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+*.egg-info/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

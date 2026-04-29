@@ -1,0 +1,2 @@
+This directory stores cached documents and the vector index.
+Both are auto-created at runtime and excluded from version control via .gitignore.
