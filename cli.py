@@ -15,15 +15,14 @@ Usage:
     python cli.py ask "What does our policy say about outsourcing?"
 """
 
+from document_loader import load_all_documents, load_custom_document
+from rag_pipeline import VectorStore, ask, ingest_document
 import argparse
 import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / "src"))
-
-from rag_pipeline import VectorStore, ask, ingest_document
-from document_loader import load_all_documents, load_custom_document
 
 
 def cmd_index(args):
@@ -34,22 +33,22 @@ def cmd_index(args):
         doc = load_custom_document(args.file)
         if doc:
             ingest_document(doc["text"], doc["name"], store)
-            print("✅ Custom document indexed.")
+            print("Custom document indexed.")
         else:
-            print("❌ Failed to load document.")
+            print("Failed to load document.")
     else:
         print("Loading all OSFI guidelines...")
         docs = load_all_documents()
         for doc in docs:
             ingest_document(doc["text"], doc["name"], store)
-        print(f"\n✅ Done. {len(store.chunks)} total chunks indexed.")
+        print(f"\nDone. {len(store.chunks)} total chunks indexed.")
 
 
 def cmd_ask(args):
     store = VectorStore()
 
     if store.is_empty:
-        print("❌ No documents indexed. Run: python cli.py index")
+        print("No documents indexed. Run: python cli.py index")
         return
 
     query = " ".join(args.query)
@@ -69,7 +68,7 @@ def cmd_ask(args):
 
 def main():
     if not os.getenv("OPENAI_API_KEY"):
-        print("❌ OPENAI_API_KEY not set. Export it before running.")
+        print("OPENAI_API_KEY not set. Export it before running.")
         sys.exit(1)
 
     parser = argparse.ArgumentParser(
@@ -80,12 +79,15 @@ def main():
 
     # index subcommand
     p_index = subparsers.add_parser("index", help="Index OSFI documents")
-    p_index.add_argument("--file", help="Path to a custom PDF or TXT file to index")
+    p_index.add_argument(
+        "--file", help="Path to a custom PDF or TXT file to index")
 
     # ask subcommand
     p_ask = subparsers.add_parser("ask", help="Ask a question")
-    p_ask.add_argument("query", nargs="+", help="Your question (wrap in quotes)")
-    p_ask.add_argument("-v", "--verbose", action="store_true", help="Show retrieved passages")
+    p_ask.add_argument("query", nargs="+",
+                       help="Your question (wrap in quotes)")
+    p_ask.add_argument("-v", "--verbose", action="store_true",
+                       help="Show retrieved passages")
 
     args = parser.parse_args()
 

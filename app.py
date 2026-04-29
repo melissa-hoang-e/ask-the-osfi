@@ -5,6 +5,8 @@ Streamlit UI for the OSFI RAG assistant.
 Run with: streamlit run app.py
 """
 
+from document_loader import load_all_documents, load_custom_document
+from rag_pipeline import VectorStore, HybridVectorStore, ask, ask_hybrid, ingest_document
 import os
 import sys
 import time
@@ -15,8 +17,6 @@ import streamlit as st
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from rag_pipeline import VectorStore, ask, ingest_document
-from document_loader import load_all_documents, load_custom_document
 
 # ── Page Config ───────────────────────────────────────────────────────────────
 
@@ -84,13 +84,16 @@ st.markdown("""
 # ── Session State ─────────────────────────────────────────────────────────────
 
 if "store" not in st.session_state:
-    st.session_state.store = VectorStore()
+    st.session_state.store = HybridVectorStore()
 
 if "history" not in st.session_state:
     st.session_state.history = []
 
 if "indexed" not in st.session_state:
     st.session_state.indexed = not st.session_state.store.is_empty
+
+if "use_hybrid_search" not in st.session_state:
+    st.session_state.use_hybrid_search = True
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
@@ -99,7 +102,7 @@ with st.sidebar:
     st.image("https://www.osfi-bsif.gc.ca/images/osfi-bsif-logo.png", width=180)
     st.markdown("---")
 
-    st.markdown("### ⚙️ Configuration")
+    st.markdown("### Configuration")
     api_key = st.text_input(
         "OpenAI API Key",
         type="password",
@@ -109,32 +112,41 @@ with st.sidebar:
     if api_key:
         os.environ["OPENAI_API_KEY"] = api_key
 
+    st.markdown("#### Retrieval Method")
+    st.session_state.use_hybrid_search = st.checkbox(
+        "Hybrid Search (BM25 + Semantic)",
+        value=st.session_state.use_hybrid_search,
+        help="Combines keyword-based BM25 and semantic search with Reciprocal Rank Fusion for better relevance. "
+             "Particularly effective for regulatory documents.",
+    )
+
     st.markdown("---")
     st.markdown("### 📚 Document Index")
 
     if st.session_state.indexed:
         n_chunks = len(st.session_state.store.chunks)
         sources = list({c["source"] for c in st.session_state.store.chunks})
-        st.success(f"✅ {n_chunks} chunks indexed")
+        st.success(f"{n_chunks} chunks indexed")
         with st.expander("Indexed sources"):
             for s in sources:
                 st.markdown(f"- {s}")
     else:
         st.warning("No documents indexed yet.")
 
-    if st.button("🔄 Index OSFI Guidelines", use_container_width=True):
+    if st.button("Index OSFI Guidelines", use_container_width=True):
         if not os.getenv("OPENAI_API_KEY"):
             st.error("Please enter your OpenAI API key first.")
         else:
             with st.spinner("Loading and indexing OSFI documents... (this may take 1-2 min)"):
                 docs = load_all_documents()
                 for doc in docs:
-                    ingest_document(doc["text"], doc["name"], st.session_state.store)
+                    ingest_document(doc["text"], doc["name"],
+                                    st.session_state.store)
             st.session_state.indexed = True
             st.rerun()
 
     st.markdown("---")
-    st.markdown("### 📄 Add Custom Document")
+    st.markdown("### Add Custom Document")
     uploaded = st.file_uploader("Upload PDF or TXT", type=["pdf", "txt"])
     if uploaded and st.button("Index uploaded file", use_container_width=True):
         if not os.getenv("OPENAI_API_KEY"):
@@ -146,13 +158,14 @@ with st.sidebar:
             doc = load_custom_document(str(tmp_path))
             if doc:
                 with st.spinner(f"Indexing {uploaded.name}..."):
-                    ingest_document(doc["text"], doc["name"], st.session_state.store)
+                    ingest_document(doc["text"], doc["name"],
+                                    st.session_state.store)
                 st.session_state.indexed = True
                 st.success(f"Indexed: {uploaded.name}")
                 st.rerun()
 
     st.markdown("---")
-    st.markdown("### 🗑️ Clear")
+    st.markdown("### Clear")
     if st.button("Clear conversation", use_container_width=True):
         st.session_state.history = []
         st.rerun()
@@ -161,7 +174,7 @@ with st.sidebar:
         index_file = Path("data/embeddings.json")
         if index_file.exists():
             index_file.unlink()
-        st.session_state.store = VectorStore()
+        st.session_state.store = HybridVectorStore()
         st.session_state.indexed = False
         st.rerun()
 
@@ -175,14 +188,15 @@ with st.sidebar:
 
 # ── Main UI ───────────────────────────────────────────────────────────────────
 
-st.markdown('<div class="main-header">🏦 Ask the OSFI</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-header">Ask the OSFI</div>',
+            unsafe_allow_html=True)
 st.markdown(
     '<div class="sub-header">RAG-powered Q&A over Canadian financial regulation guidelines</div>',
     unsafe_allow_html=True,
 )
 
 st.markdown(
-    '<div class="warning-box">⚠️ <strong>Disclaimer:</strong> This tool is for research and educational purposes only. '
+    '<div class="warning-box"><strong>Disclaimer:</strong> This tool is for research and educational purposes only. '
     'It is not legal or compliance advice. Always consult official OSFI publications and qualified legal counsel.</div>',
     unsafe_allow_html=True,
 )
@@ -200,7 +214,7 @@ EXAMPLES = [
     "What is OSFI's definition of a material outsourcing arrangement?",
 ]
 
-st.markdown("**💡 Try an example question:**")
+st.markdown("**Try an example question:**")
 cols = st.columns(3)
 for i, example in enumerate(EXAMPLES):
     if cols[i % 3].button(example, key=f"ex_{i}", use_container_width=True):
@@ -234,7 +248,8 @@ for entry in st.session_state.history:
 # ── Input ─────────────────────────────────────────────────────────────────────
 
 prefill = st.session_state.pop("prefill", "")
-query = st.chat_input("Ask a question about OSFI guidelines...", key="query_input")
+query = st.chat_input(
+    "Ask a question about OSFI guidelines...", key="query_input")
 
 if prefill and not query:
     query = prefill
@@ -251,7 +266,11 @@ if query:
         with st.chat_message("assistant"):
             with st.spinner("Retrieving relevant passages and generating answer..."):
                 start = time.time()
-                result = ask(query, st.session_state.store)
+                if st.session_state.use_hybrid_search:
+                    result = ask_hybrid(
+                        query, st.session_state.store, use_hybrid=True)
+                else:
+                    result = ask(query, st.session_state.store)
                 elapsed = time.time() - start
 
             st.write(result["answer"])
@@ -263,13 +282,26 @@ if query:
                 )
                 st.markdown(source_html, unsafe_allow_html=True)
 
-            st.caption(f"⏱ {elapsed:.1f}s · {len(result.get('retrieved_chunks', []))} passages retrieved")
+            retrieval_method = result.get("retrieval_method", "semantic")
+            retrieval_badge = "Hybrid (BM25 + Semantic)" if retrieval_method == "hybrid" else "🧠 Semantic"
+            st.caption(
+                f"⏱ {elapsed:.1f}s · {len(result.get('retrieved_chunks', []))} passages · {retrieval_badge}")
 
-            with st.expander("🔍 View retrieved passages"):
+            with st.expander("View retrieved passages"):
                 for chunk in result.get("retrieved_chunks", []):
+                    # Build score display with hybrid search metadata
+                    score_text = f"score: {chunk['score']:.2f}"
+                    if chunk.get('bm25_rank'):
+                        score_text += f" (BM25: #{chunk['bm25_rank']}"
+                        if chunk.get('semantic_rank'):
+                            score_text += f", Semantic: #{chunk['semantic_rank']}"
+                        score_text += ")"
+                    elif chunk.get('semantic_rank'):
+                        score_text += f" (Semantic: #{chunk['semantic_rank']})"
+
                     st.markdown(
                         f'<div class="chunk-card">'
-                        f'<span class="score-badge">score: {chunk["score"]:.2f}</span>'
+                        f'<span class="score-badge">{score_text}</span>'
                         f'<strong>{chunk["source"]}</strong><br><br>{chunk["text"][:400]}...</div>',
                         unsafe_allow_html=True,
                     )
