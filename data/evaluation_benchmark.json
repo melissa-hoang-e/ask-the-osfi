@@ -1,0 +1,94 @@
+{
+  "queries": [
+    {
+      "query_id": "q_tpm_1",
+      "query_text": "What are the requirements for third-party risk management in OSFI guidelines?",
+      "relevant_docs": ["B-10"],
+      "description": "Direct question about third-party risk management framework"
+    },
+    {
+      "query_id": "q_tpm_2",
+      "query_text": "How should institutions manage material outsourcing arrangements?",
+      "relevant_docs": ["B-10"],
+      "description": "Specific question about outsourcing governance"
+    },
+    {
+      "query_id": "q_tpm_3",
+      "query_text": "What controls should be in place for cloud service providers?",
+      "relevant_docs": ["B-10", "B-13"],
+      "description": "Cross-cutting question about technology and third-party governance"
+    },
+    {
+      "query_id": "q_cyber_1",
+      "query_text": "What is the OSFI guidance on cybersecurity and operational resilience?",
+      "relevant_docs": ["B-13"],
+      "description": "Direct question about technology and cyber risk framework"
+    },
+    {
+      "query_id": "q_cyber_2",
+      "query_text": "How should institutions respond to cyber incidents?",
+      "relevant_docs": ["B-13"],
+      "description": "Incident response requirements"
+    },
+    {
+      "query_id": "q_model_1",
+      "query_text": "What are the OSFI requirements for model risk management?",
+      "relevant_docs": ["E-23"],
+      "description": "Direct question about model risk framework"
+    },
+    {
+      "query_id": "q_model_2",
+      "query_text": "How should credit risk models be validated and tested?",
+      "relevant_docs": ["E-23"],
+      "description": "Model validation requirements"
+    },
+    {
+      "query_id": "q_climate_1",
+      "query_text": "What is OSFI's guidance on climate risk management?",
+      "relevant_docs": ["B-15"],
+      "description": "Direct question about climate risk framework"
+    },
+    {
+      "query_id": "q_climate_2",
+      "query_text": "How should banks assess and manage financial risks from climate change?",
+      "relevant_docs": ["B-15"],
+      "description": "Climate risk assessment and integration"
+    },
+    {
+      "query_id": "q_multi_1",
+      "query_text": "How do third-party risk and cyber risk overlap in financial institutions?",
+      "relevant_docs": ["B-10", "B-13"],
+      "description": "Cross-domain question requiring understanding of multiple guidelines"
+    },
+    {
+      "query_id": "q_multi_2",
+      "query_text": "What governance structures should institutions implement for external dependencies?",
+      "relevant_docs": ["B-10"],
+      "description": "Governance and oversight for external parties"
+    },
+    {
+      "query_id": "q_integrity_1",
+      "query_text": "What are OSFI's expectations for institutional integrity and security?",
+      "relevant_docs": ["I&S"],
+      "description": "Integrity and security framework"
+    },
+    {
+      "query_id": "q_compliance_1",
+      "query_text": "How should institutions ensure due diligence for sensitive arrangements?",
+      "relevant_docs": ["B-10"],
+      "description": "Due diligence requirements in third-party relationships"
+    },
+    {
+      "query_id": "q_oversight_1",
+      "query_text": "What ongoing monitoring and oversight is required for service providers?",
+      "relevant_docs": ["B-10"],
+      "description": "Continuous monitoring of third-party performance"
+    },
+    {
+      "query_id": "q_resilience_1",
+      "query_text": "How should financial institutions plan for business continuity and disaster recovery?",
+      "relevant_docs": ["B-13"],
+      "description": "Operational resilience and continuity planning"
+    }
+  ]
+}
